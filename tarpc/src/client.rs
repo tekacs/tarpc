@@ -437,7 +437,7 @@ where
         cx: &mut Context<'_>,
     ) -> Poll<Option<Result<DispatchRequest<Req, Resp>, ChannelError<C::Error>>>> {
         if self.in_flight_requests().len() >= self.config.max_in_flight_requests {
-            tracing::info!(
+            tracing::trace!(
                 "At in-flight request capacity ({}/{}).",
                 self.in_flight_requests().len(),
                 self.config.max_in_flight_requests
@@ -455,7 +455,7 @@ where
                 Some(request) => {
                     if request.response_completion.is_closed() {
                         let _entered = request.span.enter();
-                        tracing::info!("AbortRequest");
+                        tracing::trace!("AbortRequest");
                         continue;
                     }
 
@@ -530,7 +530,7 @@ where
             },
         });
         self.start_send(request)?;
-        tracing::info!("SendRequest");
+        tracing::trace!("SendRequest");
         drop(entered);
 
         self.in_flight_requests()
@@ -554,7 +554,7 @@ where
             request_id,
         };
         self.start_send(cancel)?;
-        tracing::info!("CancelRequest");
+        tracing::trace!("CancelRequest");
         Poll::Ready(Some(Ok(())))
     }
 
@@ -577,15 +577,15 @@ where
         loop {
             match (self.as_mut().pump_read(cx)?, self.as_mut().pump_write(cx)?) {
                 (Poll::Ready(None), _) => {
-                    tracing::info!("Shutdown: read half closed, so shutting down.");
+                    tracing::trace!("Shutdown: read half closed, so shutting down.");
                     return Poll::Ready(Ok(()));
                 }
                 (read, Poll::Ready(None)) => {
                     if self.in_flight_requests.is_empty() {
-                        tracing::info!("Shutdown: write half closed, and no requests in flight.");
+                        tracing::trace!("Shutdown: write half closed, and no requests in flight.");
                         return Poll::Ready(Ok(()));
                     }
-                    tracing::info!(
+                    tracing::trace!(
                         "Shutdown: write half closed, and {} requests in flight.",
                         self.in_flight_requests().len()
                     );

@@ -194,7 +194,7 @@ where
             request.context.trace_context.new_child()
         });
         let entered = span.enter();
-        tracing::info!("ReceiveRequest");
+        tracing::trace!("ReceiveRequest");
         let start = self.in_flight_requests_mut().start_request(
             request.id,
             request.context.deadline,
@@ -388,7 +388,7 @@ where
                 Poll::Ready(Some(request_id)) => {
                     if let Some(span) = self.in_flight_requests_mut().remove_request(request_id) {
                         let _entered = span.enter();
-                        tracing::info!("ResponseCancelled");
+                        tracing::trace!("ResponseCancelled");
                     }
                     Ready
                 }
@@ -481,7 +481,7 @@ where
             .remove_request(response.request_id)
         {
             let _entered = span.enter();
-            tracing::info!("SendResponse");
+            tracing::trace!("SendResponse");
             self.project()
                 .transport
                 .start_send(response)
@@ -742,15 +742,15 @@ impl<Req, Res> InFlightRequest<Req, Res> {
         span.record("otel.name", &method.unwrap_or(""));
         let _ = Abortable::new(
             async move {
-                tracing::info!("BeginRequest");
+                tracing::trace!("BeginRequest");
                 let response = serve.serve(context, message).await;
-                tracing::info!("CompleteRequest");
+                tracing::trace!("CompleteRequest");
                 let response = Response {
                     request_id,
                     message: Ok(response),
                 };
                 let _ = response_tx.send(response).await;
-                tracing::info!("BufferResponse");
+                tracing::trace!("BufferResponse");
             },
             abort_registration,
         )

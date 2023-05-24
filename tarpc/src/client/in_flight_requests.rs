@@ -92,7 +92,7 @@ impl<Resp> InFlightRequests<Resp> {
     pub fn complete_request(&mut self, response: Response<Resp>) -> bool {
         if let Some(request_data) = self.request_data.remove(&response.request_id) {
             let _entered = request_data.span.enter();
-            tracing::info!("ReceiveResponse");
+            tracing::trace!("ReceiveResponse");
             self.request_data.compact(0.1);
             self.deadlines.remove(&request_data.deadline_key);
             let _ = request_data.response_completion.send(Ok(response));
